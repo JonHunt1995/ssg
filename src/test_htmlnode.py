@@ -1,6 +1,6 @@
 import unittest
 
-from htmlnode import HTMLNode, LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 
 class TestHTMLNode(unittest.TestCase):
 	def test_props_to_html(self):
@@ -73,6 +73,72 @@ class TestHTMLNode(unittest.TestCase):
 	def test_leaf_props_sorted_in_output(self):
 		node = LeafNode("a", "Click", {"target": "_blank", "href": "https://x.com"})
 		self.assertEqual(node.to_html(), '<a href="https://x.com" target="_blank">Click</a>')
+
+	def test_to_html_with_children(self):
+		child_node = LeafNode("span", "child")
+		parent_node = ParentNode("div", [child_node])
+		self.assertEqual(parent_node.to_html(), "<div><span>child</span></div>")
+
+	def test_to_html_with_grandchildren(self):
+		grandchild_node = LeafNode("b", "grandchild")
+		child_node = ParentNode("span", [grandchild_node])
+		parent_node = ParentNode("div", [child_node])
+		self.assertEqual(
+			parent_node.to_html(),
+			"<div><span><b>grandchild</b></span></div>",
+		)
+
+	def test_to_html_with_single_leaf_node(self):
+		child_node = LeafNode("p", "Here is some text")
+		parent_node = ParentNode("div", [child_node], {"class": "container", "id": "cool"})
+		self.assertEqual(
+			parent_node.to_html(),
+			'<div class="container" id="cool"><p>Here is some text</p></div>'
+		)
+		
+	def test_to_html_with_multiple_leaf_nodes(self):
+		children = [
+			LeafNode("p", "Here is some text"),
+			LeafNode("p", "Here is some text"),
+			LeafNode("p", "Here is some text"),
+			LeafNode("p", "Here is some text"),
+		]
+		parent_node = ParentNode("div", children, {"class": "container", "id": "cool"})
+		self.assertEqual(
+			parent_node.to_html(),
+			'<div class="container" id="cool"><p>Here is some text</p><p>Here is some text</p><p>Here is some text</p><p>Here is some text</p></div>'
+		)
+
+	def test_parent_with_grandchildren(self):
+		inner = ParentNode("span", [LeafNode("b", "X")])
+		outer = ParentNode("div", [inner])
+		self.assertEqual(outer.to_html(), "<div><span><b>X</b></span></div>")
+
+	def test_parent_with_multiple_children(self):
+		children = [
+			LeafNode("p", "A"),
+			LeafNode(None, "B"),
+			LeafNode("i", "C"),
+			LeafNode(None, "D"),
+		]
+		parent = ParentNode("div", children)
+		self.assertEqual(parent.to_html(), "<div><p>A</p>B<i>C</i>D</div>")
+
+	def test_parent_raises_without_tag(self):
+		with self.assertRaisesRegex(ValueError, "requires a tag"):
+			ParentNode(None, [LeafNode("p", "x")]).to_html()
+
+	def test_parent_raises_with_children_none(self):
+		with self.assertRaisesRegex(ValueError, "Missing children argument"):
+			ParentNode("div", None).to_html()
+
+	def test_parent_raises_with_children_empty(self):
+		with self.assertRaisesRegex(ValueError, "At least one child is required"):
+			ParentNode("div", []).to_html()
+
+	def test_parent_props_rendered(self):
+		parent = ParentNode("section", [LeafNode(None, "hi")], {"data-x": "1"})
+		self.assertEqual(parent.to_html(), '<section data-x="1">hi</section>')
 		
 if __name__ == "__main__":
     unittest.main()
