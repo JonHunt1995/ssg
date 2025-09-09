@@ -26,6 +26,8 @@ class LeafNode(HTMLNode):
 			raise ValueError("All leaf nodes require a value")
 		if not self.tag:
 			return f"{self.value}"
+		if self.tag == "img":
+			return f"<{self.tag}{'' if not self.props else super().props_to_html()}>"
 		return f"<{self.tag}{'' if not self.props else super().props_to_html()}>{self.value}</{self.tag}>"
 	
 class ParentNode(HTMLNode):
