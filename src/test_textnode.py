@@ -1,7 +1,7 @@
 import unittest
 
 from textnode import TextNode, TextType
-
+from helpers import split_nodes_delimiter
 
 class TestTextNode(unittest.TestCase):
 	def test_eq(self):
@@ -33,6 +33,40 @@ class TestTextNode(unittest.TestCase):
 		node = TextNode("link", TextType.LINK, "https://google.com")
 		node2 = TextNode("link", TextType.LINK)
 		self.assertNotEqual(node, node2)
+
+	def test_split_text_by_code_blocks(self):
+		node = TextNode("This is text with a `code block` word", TextType.TEXT)
+		new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+		target = [
+			TextNode("This is text with a ", TextType.TEXT),
+			TextNode("code block", TextType.CODE),
+			TextNode(" word", TextType.TEXT),
+		]
+		self.assertEqual(target, new_nodes)
+
+	def test_do_not_split_text_with_no_delims(self):
+		node = TextNode("This is just a plain old text node", TextType.TEXT)
+		target = [TextNode("This is just a plain old text node", TextType.TEXT)]
+		new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+		self.assertEqual(target, new_nodes)
+
+	def test_multiple_matched_pairs(self):
+		node = TextNode("PRE `FIRST` MID `SECOND` POST", TextType.TEXT)
+		target = [
+			TextNode("PRE ", TextType.TEXT),
+			TextNode("FIRST", TextType.CODE),
+			TextNode(" MID ", TextType.TEXT),
+			TextNode("SECOND", TextType.CODE),
+			TextNode(" POST", TextType.TEXT),
+		]
+		new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+		self.assertEqual(target, new_nodes)
+
+	def test_songle_code_block(self):
+		node = TextNode("`This`", TextType.TEXT)
+		target = [TextNode("`This`", TextType.CODE)]
+		new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+		self.assertEqual(target, new_nodes)
 
 if __name__ == "__main__":
     unittest.main()
