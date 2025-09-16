@@ -1,5 +1,6 @@
 from textnode import TextNode, TextType
 from htmlnode import LeafNode
+import re
 
 def text_node_to_html_node(text_node: TextNode) -> LeafNode:
 	if not isinstance(text_node.text_type, TextType):
@@ -51,6 +52,9 @@ def split_text_node(node: TextNode, delimiter: str, text_type: TextType) -> list
 		raise Exception("invalid markdown syntax")
 	if node_text[:idx]:
 		output.append(TextNode(node_text[:idx], text_type))
-	if idx < len(node_text):
+	if idx < len(node_text) - 1:
 		output.extend(split_text_node(TextNode(node_text[idx+len(delimiter):], TextType.TEXT), delimiter, text_type))
 	return output
+
+def extract_markdown_images(text) -> list[tuple[str, str]]:
+	return re.findall(r"!\[([^[\]]+)\]\(([^()]+\))", text)

@@ -62,11 +62,34 @@ class TestTextNode(unittest.TestCase):
 		new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
 		self.assertEqual(target, new_nodes)
 
-	def test_songle_code_block(self):
+	def test_single_code_block(self):
 		node = TextNode("`This`", TextType.TEXT)
-		target = [TextNode("`This`", TextType.CODE)]
+		target = [TextNode("This", TextType.CODE)]
 		new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
 		self.assertEqual(target, new_nodes)
+
+	def test_start_code_block(self):
+		node = TextNode("`This` is a test with a code block", TextType.TEXT)
+		target = [
+			TextNode("This", TextType.CODE),
+			TextNode(" is a test with a code block", TextType.TEXT)
+			]
+		new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+		self.assertEqual(target, new_nodes)
+
+	def test_end_code_block(self):
+		node = TextNode("This `is a test with a code block`", TextType.TEXT)
+		target = [
+			TextNode("This ", TextType.TEXT),
+			TextNode("is a test with a code block", TextType.CODE)
+			]
+		new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+		self.assertEqual(target, new_nodes)
+
+	def test_mis_matched_delims(self):
+		node = TextNode("This `is a test with a code block", TextType.TEXT)
+		with self.assertRaises(Exception):
+			new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
 
 if __name__ == "__main__":
     unittest.main()
